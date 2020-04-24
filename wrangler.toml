@@ -1,6 +1,7 @@
-name = "cloudflare-leole"
-type = "javascript"
-account_id = ""
+name = "cloudflare-fullstack-internship"
+type = "webpack"
+account_id = "2f9d34ae107fe51e66cc3b3c58a7a509"
 workers_dev = true
-route = ""
-zone_id = ""
+
+[env.production]
+route = "https://cloudflare-fullstack-internship.leolemain.com/*"
