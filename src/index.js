@@ -8,9 +8,10 @@
 "use strict";
 
 import { ElementHandler } from "../Utils/ElementHandler.js";
-import { DEBUG, URL, REQUEST_HEADER, VARIANTS, } from "../Utils/Constants.js";
+import { DEBUG, ENABLE_COOKIE, URL, STATUS_CODE, FETCH_HEADER, VARIANTS, } from "../Utils/Constants.js";
 
 addEventListener('fetch', event => {
+
 	// Server HTTP Request Methods handlers
 	switch (event.request.method) {
 		case "GET":
@@ -32,11 +33,12 @@ addEventListener('fetch', event => {
 // #region HTTP Request functions
 
 async function getRequestHandler(request) {
+
 	return getUrlJson(request);
 }
 
 async function otherRequestHandler() {
-	return new Response("HTTP request method not supported! Please use GET only...", { status: 400 });
+	return new Response("HTTP request method not supported! Please use GET only...", { status: STATUS_CODE.BadRequest });
 }
 
 // #endregion
@@ -46,45 +48,55 @@ async function otherRequestHandler() {
 
 // HTTP-GET: get data from specified URL, fetch the html variant randomly, and return the html from script
 async function getUrlJson(request) {
-	if (request.method !== "GET") {
-		return new Response("Invalid Request received! Please check again.");
-	}
 
+	var cookieValues = cookieParser(request.headers.get("cookie"));
+	var responseFromVariantUrl;
+	var responseHeader;
 	var jsonData;
 	var htmlBody;
+	var variationIndex;
+
 	try {
 
-		var responseFromURL = await fetch(URL);
+		var responseFromURL = await fetch(URL, FETCH_HEADER);
 		if (responseFromURL.ok) {
 			jsonData = await responseFromURL.json();
 		}
 
 		// Randomly pick 1 of the variants given
 		var variantUrl = randomUrlGeneratorWithEP(jsonData.variants);
-		var responseFromVariantUrl = await fetch(variantUrl);
+
+		// If the url existed in Cookie, presist that URL to the client
+		if (cookieValues.hasOwnProperty('urlVariant') && ENABLE_COOKIE) {
+			variationIndex = variationParser(cookieValues.urlVariant);
+			responseFromVariantUrl = await fetch(cookieValues.urlVariant);
+
+			// Don't need to Set Cookie, because it already there
+			responseHeader = {
+				headers: {
+					'Content-Type': 'text/html',
+				}
+			};
+		} else {
+			variationIndex = variationParser(variantUrl);
+			responseFromVariantUrl = await fetch(variantUrl);
+
+			// Set Cookie into response header to save url on Client
+			responseHeader = {
+				headers: {
+					'Content-Type': 'text/html',
+					'Set-Cookie': 'urlVariant=' + variantUrl
+				}
+			};
+		}
 
 		if (responseFromVariantUrl.ok) {
 			htmlBody = await responseFromVariantUrl.text();
 		}
 
-		if (DEBUG) {
-			// console.log("request param", request);
-			// console.log("Response from orginal URL", responseFromURL);
-			// console.log("Parsed JSON", jsonData);
-			// console.log("Variant url to be return", variantUrl);
-			// console.log("Response from Variant URL", responseFromVariantUrl);
-			// console.log("HTML body as Text", htmlBody);
-		}
-
-		var responseWithHTML = new Response(htmlBody, REQUEST_HEADER);
-		var variation = randomUrlGeneratorWithEP(VARIANTS);
-		var elemntHandler = new ElementHandler(variation);
-
-		if (DEBUG) {
-			console.log("variation", variation);
-		}
-
-		let modResponseWithHTML = new HTMLRewriter()
+		var responseWithHTML = new Response(htmlBody, responseHeader);
+		var elemntHandler = new ElementHandler(VARIANTS[variationIndex]);
+		var modResponseWithHTML = new HTMLRewriter()
 			.on('title', elemntHandler)
 			.on('h1#title', elemntHandler)
 			.on('p#description', elemntHandler)
@@ -92,15 +104,23 @@ async function getUrlJson(request) {
 			.on('a', elemntHandler)
 			.transform(responseWithHTML);
 
+		if (DEBUG) {
+			console.log("Parsed JSON", jsonData);
+			// console.log("Variant url to be requested", variantUrl);
+			console.log("cookieValues", cookieValues);
+			// console.log("Response from Variant URL", responseFromVariantUrl);
+			// console.log("HTML body as Text", htmlBody);
+			console.log("Variation", VARIANTS[variationIndex]);
+			console.log("Response Header", responseHeader);
+		}
 
-	
 		return modResponseWithHTML;
 
 	} catch (error) {
 		if (DEBUG) {
-			return new Response(error.message || error.toString(), { status: 404 });
+			return new Response(error.message || error.toString(), { status: STATUS_CODE.NotFound });
 		} else {
-			return errorHandler(error);
+			return new Response("HTTP Error: " + error, { status: error.status });
 		}
 	}
 }
@@ -115,12 +135,22 @@ function randomUrlGeneratorWithEP(array) {
 	return array[ind];
 }
 
-// Server Error Code handler
-function errorHandler(err) {
-	if (DEBUG)
-		console.error("HTTP Error: " + err, { status: err.status });
+function cookieParser(cookies) {
+	var result = null;
+	if (cookies.length != 0) {
+		// Parse all Cookies from Client's header
+		// Reference: https://www.youtube.com/watch?v=8tL5P-RtAH0
+		result = cookies
+			.split(';')
+			.map(cookie => cookie.split('='))
+			.reduce((accumulator, [key, value]) => ({ ...accumulator, [key.trim()]: decodeURIComponent(value) }), {});
+	}
+	return result;
+}
 
-	return new Response("HTTP Error: " + err, { status: err.status });
+// Get the last 
+function variationParser(url) {
+	return url.slice(url.length - 1);
 }
 
 // #endregion

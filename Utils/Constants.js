@@ -1,10 +1,26 @@
 export const DEBUG = true;
+export const ENABLE_COOKIE = true;
 
 export const URL = "https://cfw-takehome.developers.workers.dev/api/variants";
+// export const FETCH_HEADER = {
+//     method: 'GET',
+//     headers: {
+//         'Accept': 'application/json',
+//         'Content-Type': 'application/json',
+//         'Cache': 'no-cache',
+//     },
+//     credentials: 'include'
+// };
 
-export const REQUEST_HEADER = {
-    headers: { 'Content-Type': 'text/html' }
-}
+export const FETCH_HEADER = new Headers({
+    method: 'GET',
+    headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Cache': 'no-cache',
+    },
+    credentials: 'include'
+});
 
 /**
  * HTML modification variations
@@ -12,16 +28,16 @@ export const REQUEST_HEADER = {
 export const VARIANTS = [
     {
         title: 'Leo Le\'s GitHub',
-        h1: 'Leo Le\'s GitHub',
-        description: '"A journey of a thousand miles begins with a single step" - Lao Tzu',
-        urlTitle: 'Check out Leo\'s GitHub, then move forward',
+        h1: '"A journey of a thousand miles begins with a single step" - Lao Tzu',
+        description: 'Check out Leo\'s GitHub, then move forward',
+        urlTitle: 'Leo Le\'s GitHub',
         urlLink: 'https://github.com/LeoLe101',
     },
     {
         title: 'Leo Le\'s LinkedIn',
-        h1: 'Leo Le\'s LinkedIn',
-        description: '"Know your intern more than he does himself" - Unknown',
-        urlTitle: 'Check out Leo\'s LinkedIn, then learn about him',
+        h1: '"Know your intern more than he does himself" - Unknown',
+        description: 'Check out Leo\'s LinkedIn, then learn about him',
+        urlTitle: 'Leo Le\'s LinkedIn',
         urlLink: 'https://www.linkedin.com/in/leole101/',
     },
 ]

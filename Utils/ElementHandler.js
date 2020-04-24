@@ -9,8 +9,6 @@ export class ElementHandler {
     }
 
     element(element) {
-        console.log("elementValue", element.tagName);
-
         if (element.tagName === 'title') {
             element.setInnerContent(this.variant.title);
         }
@@ -20,11 +18,8 @@ export class ElementHandler {
         if (element.tagName === 'p') {
             element.setInnerContent(this.variant.description);
         }
-        if (element.tagName === 'href') {
-            element.setInnerContent(this.variant.urlLink);
-        }
         if (element.tagName === 'a') {
-            // element.href(this.variant.urlLink);
+            element.setAttribute("href", this.variant.urlLink);
             element.setInnerContent(this.variant.urlTitle);
         }
     }
