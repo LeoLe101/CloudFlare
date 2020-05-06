@@ -3,7 +3,7 @@
  * @see https://github.com/aptonic/ab.js/blob/master/examples/example.html
  * 
  * This page currently hosted at Work.Dev: 
- * @link https://cloudflare-fullstack-internship.leolemain.workers.dev/ 
+ * @see https://cloudflare-fullstack-internship.leolemain.workers.dev/ 
  */
 "use strict";
 
@@ -32,11 +32,16 @@ addEventListener('fetch', event => {
 
 // #region HTTP Request functions
 
+/**
+ * Handler for HTTP request GET
+ */
 async function getRequestHandler(request) {
-
-	return getUrlJson(request);
+	return getUrl(request);
 }
 
+/**
+ * Handler for other HTTP request that is not GET
+ */
 async function otherRequestHandler() {
 	return new Response("HTTP request method not supported! Please use GET only...", { status: STATUS_CODE.BadRequest });
 }
@@ -46,15 +51,18 @@ async function otherRequestHandler() {
 
 // #region Helper Functions
 
-// HTTP-GET: get data from specified URL, fetch the html variant randomly, and return the html from script
-async function getUrlJson(request) {
+/**
+ * HTTP-GET: get data from specified URL, fetch the html variant randomly, and return the html from script
+ * @param {*} request 
+ */
+async function getUrl(request) {
 
-	var cookieValues = cookieParser(request.headers.get("cookie"));
-	var responseFromVariantUrl;
-	var responseHeader;
 	var jsonData;
 	var htmlBody;
+	var responseHeader;
 	var variationIndex;
+	var responseFromVariantUrl;
+	var cookieValues = cookieParser(request.headers.get("cookie"));
 
 	try {
 
@@ -63,11 +71,15 @@ async function getUrlJson(request) {
 			jsonData = await responseFromURL.json();
 		}
 
-		// Randomly pick 1 of the variants given
+		// Randomly pick 1 of the variants URL given
 		var variantUrl = randomUrlGeneratorWithEP(jsonData.variants);
 
 		// If the url existed in Cookie, presist that URL to the client
 		if (cookieValues.hasOwnProperty('urlVariant') && ENABLE_COOKIE) {
+
+			if (DEBUG)
+				console.log("Cookie has URL ------ YES");
+
 			variationIndex = variationParser(cookieValues.urlVariant);
 			responseFromVariantUrl = await fetch(cookieValues.urlVariant);
 
@@ -78,6 +90,10 @@ async function getUrlJson(request) {
 				}
 			};
 		} else {
+
+			if (DEBUG)
+				console.log("Cookie has URL ------ NO");
+
 			variationIndex = variationParser(variantUrl);
 			responseFromVariantUrl = await fetch(variantUrl);
 
@@ -106,10 +122,7 @@ async function getUrlJson(request) {
 
 		if (DEBUG) {
 			console.log("Parsed JSON", jsonData);
-			// console.log("Variant url to be requested", variantUrl);
-			console.log("cookieValues", cookieValues);
-			// console.log("Response from Variant URL", responseFromVariantUrl);
-			// console.log("HTML body as Text", htmlBody);
+			console.log("Variant url to be requested", variantUrl);
 			console.log("Variation", VARIANTS[variationIndex]);
 			console.log("Response Header", responseHeader);
 		}
@@ -126,31 +139,54 @@ async function getUrlJson(request) {
 }
 
 /**
-* Random url generator with Equal Probability to decide which variant to fetch data from
-* Reference: 
-* @see https://stackoverflow.com/questions/8877249/generate-random-integers-with-probabilities
+ * Random url generator with Equal Probability to decide which variant to fetch data from
+ * Reference: 
+ * @see https://stackoverflow.com/questions/8877249/generate-random-integers-with-probabilities
+ * @param {*} array 
  */
 function randomUrlGeneratorWithEP(array) {
 	var ind = Math.floor(Math.random() * array.length);
+
+	if (DEBUG)
+		console.log("Random Url Generator With Equal Probability: ", array[ind]);
+
 	return array[ind];
 }
+
+/**
+ * Parse all Cookies from Client's header
+ * Reference: https://www.youtube.com/watch?v=8tL5P-RtAH0
+ * @param {*} cookies 
+ */
 
 function cookieParser(cookies) {
 	var result = null;
 	if (cookies.length != 0) {
-		// Parse all Cookies from Client's header
-		// Reference: https://www.youtube.com/watch?v=8tL5P-RtAH0
 		result = cookies
 			.split(';')
 			.map(cookie => cookie.split('='))
 			.reduce((accumulator, [key, value]) => ({ ...accumulator, [key.trim()]: decodeURIComponent(value) }), {});
 	}
+
+	if (DEBUG)
+		console.log("Cookie Parser: ", result);
+
 	return result;
 }
 
-// Get the last 
+/**
+ * Get the last index from the url as an index. Minus 1 due to the array start from 0 - 1
+ * @param {*} url 
+ */
 function variationParser(url) {
-	return url.slice(url.length - 1);
+	var result = url.slice(url.length - 1);
+
+	if (DEBUG) {
+		console.log("Variantion Parser URL:", url);
+		console.log("Variantion Parser Result:", result);
+	}
+
+	return (result - 1);
 }
 
 // #endregion

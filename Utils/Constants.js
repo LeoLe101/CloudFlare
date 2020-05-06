@@ -1,17 +1,21 @@
+/**
+ * DEBUG Flag. True/False to show Console.log()
+ */
 export const DEBUG = true;
+
+/**
+ * Enable Cookie website persisting variant feature
+ */
 export const ENABLE_COOKIE = true;
 
+/**
+ * Main URL
+ */
 export const URL = "https://cfw-takehome.developers.workers.dev/api/variants";
-// export const FETCH_HEADER = {
-//     method: 'GET',
-//     headers: {
-//         'Accept': 'application/json',
-//         'Content-Type': 'application/json',
-//         'Cache': 'no-cache',
-//     },
-//     credentials: 'include'
-// };
 
+/**
+ * Fetch API header with credentials: include to allow Cookie for Chrome Browser access
+ */
 export const FETCH_HEADER = new Headers({
     method: 'GET',
     headers: {
